@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ChoregrapheProject xmlns="http://www.aldebaran-robotics.com/schema/choregraphe/project.xsd" xar_version="3">
+    <Box name="root" id="-1" localization="8" tooltip="Root box of Choregraphe&apos;s behavior. Highest level possible." x="0" y="0">
+        <bitmap>media/images/box/root.png</bitmap>
+        <script language="4">
+            <content>
+                <![CDATA[]]>
+</content>
+        </script>
+        <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+        <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+        <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+        <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+        <Timeline enable="0">
+            <BehaviorLayer name="behavior_layer1">
+                <BehaviorKeyframe name="keyframe1" index="1">
+                    <Diagram>
+                        <Box name="Learn and Test" id="2" localization="8" tooltip="" x="209" y="33">
+                            <bitmap>media/images/box/box-python-script.png</bitmap>
+                            <script language="4">
+                                <content>
+                                    <![CDATA[from random import shuffle
+
+import socket
+
+class MyClass(GeneratedClass):
+    def __init__(self):
+        GeneratedClass.__init__(self)
+
+        say = ALProxy("ALTextToSpeech", "192.168.1.115", 9559)
+        behaviors = ALProxy("ALBehaviorManager", '192.168.1.115', 9559)
+        postures = ALProxy("ALRobotPosture", '192.168.1.115', 9559)
+        postures.goToPosture("StandInit", 0.6)
+        say.setParameter("speed", 80)
+
+        sock = self.getConnection()
+        group = self.getGestures(sock)
+
+        self.learnPhase(say, sock, behaviors, postures, group)
+        self.rest(say, sock)
+        self.testPhase(say, sock, behaviors, postures, group)
+        say.resetSpeed()
+
+    def getGestures(self, sock):
+        group = sock.recv(128)
+        if group == '\x01':
+            return ['always','autumn','evening','fast','februari','july','life','may','october','saturday']
+        else:
+            return ['april','begin','december','earlier','march','monday','september','slow','summer','year']
+
+    def learnPhase(self, say, sock, behaviors, postures, gestures):
+        say.say('I will now show gestures, try to remember the gestures and their meaning. Good luck!')
+        time.sleep(1.5)
+
+        for n in range(1):
+            self.customShuffle(gestures, '')
+            for g in gestures:
+                sock.sendall(g)
+                self.run(say, behaviors, g, True)
+                postures.goToPosture("StandInit", 0.6)
+                time.sleep(1.6)
+
+    def rest(self, say, sock):
+        say.say('After a short break I will perform the gestures I have just showed you. You have to guess the meaning of the gestures. The test starts in fourty seconds.')
+        time.sleep(28.0)
+        say.say('Ten seconds left.')
+        time.sleep(9.0)
+        say.say('The test starts now.')
+        sock.sendall('testphasestart')
+        time.sleep(1.0)
+
+    def testPhase(self, say, sock, behaviors, postures, gestures):
+        say.say('I will now show gestures. Try to guess their meaning. Good luck.')
+        time.sleep(1.5)
+
+        for n in range(3):
+            self.customShuffle(gestures, gestures[9])
+            for g in gestures:
+                sock.sendall(g)
+                self.run(say, behaviors, g, False)
+                postures.goToPosture("StandInit", 0.6)
+                sock.recv(128)
+
+        say.say('That were all gestures. I have now tought you everything I know.')
+        sock.sendall('testphaseover')
+
+    def customShuffle(self, names, last):
+        shuffle(names)
+        while(names[0] == last or self.badOrder(names)):
+            shuffle(names)
+
+    def badOrder(self, names):
+        for i in range(10):
+            if(names[i] == 'always' or names[i] == 'monday'):
+                if(i == 0):
+                    return names[1] == 'may' or names[1] == 'september'
+                if(i == 9):
+                    return names[8] == 'may' or names[8] == 'september'
+                return names[i-1] == 'may' or names[i-1] == 'september' or names[i+1] == ' may' or names[i+1] == 'september'
+        return False
+
+    def run(self, say, behaviors, name, sayName):
+        if(sayName):
+            say.say(name)
+
+        if (behaviors.isBehaviorInstalled('.lastUploadedChoregrapheBehavior/gestures/' + name)):
+            if (not behaviors.isBehaviorRunning('.lastUploadedChoregrapheBehavior/gestures/' + name)):
+                behaviors.runBehavior('.lastUploadedChoregrapheBehavior/gestures/' + name)
+            else:
+                print "Behavior is already running."
+        else:
+            print "Behavior not found."
+        return
+
+    def getConnection(self):
+        #Set up wifi connection with tablet.
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('192.168.1.148', 12579))
+        return sock
+
+    def onLoad(self):
+        #put initialization code here
+        pass
+
+    def onUnload(self):
+        #put clean-up code here
+        pass
+
+    def onInput_onStart(self):
+        #self.onStopped() #activate the output of the box
+        pass
+
+    def onInput_onStop(self):
+        self.onUnload() #it is recommended to reuse the clean-up as the box is stopped
+        self.onStopped() #activate the output of the box]]>
+</content>
+                            </script>
+                            <Input name="onLoad" type="1" type_size="1" nature="0" inner="1" tooltip="Signal sent when diagram is loaded." id="1" />
+                            <Input name="onStart" type="1" type_size="1" nature="2" inner="0" tooltip="Box behavior starts when a signal is received on this input." id="2" />
+                            <Input name="onStop" type="1" type_size="1" nature="3" inner="0" tooltip="Box behavior stops when a signal is received on this input." id="3" />
+                            <Output name="onStopped" type="1" type_size="1" nature="1" inner="0" tooltip="Signal sent when box behavior is finished." id="4" />
+                        </Box>
+                        <Link inputowner="2" indexofinput="2" outputowner="0" indexofoutput="2" />
+                        <Link inputowner="0" indexofinput="4" outputowner="2" indexofoutput="4" />
+                    </Diagram>
+                </BehaviorKeyframe>
+            </BehaviorLayer>
+        </Timeline>
+    </Box>
+</ChoregrapheProject>
